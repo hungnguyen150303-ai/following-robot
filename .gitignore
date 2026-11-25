@@ -1,0 +1,37 @@
+# Local credentials and environment overrides
+.env
+.env.*
+!.env.example
+
+# Python build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+
+# Runtime and experiment outputs
+*.log
+experiments/logs/*
+!experiments/logs/.gitkeep
+experiments/exports/
+*.bag
+*.bag.active
+*.db3
+*.mcap
+*.mp4
+*.avi
+*.mkv
+
+# Downloaded or trained model weights
+*.pt
+*.pth
+*.onnx
+*.pb
+
+# Local editor and OS files
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo

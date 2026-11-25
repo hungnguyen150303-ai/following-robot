@@ -1,0 +1,80 @@
+services:
+  mir_follower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mir_follower:latest
+    container_name: mir_follower_app
+    
+    # Enable GPU support
+    runtime: nvidia
+    
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - DISPLAY=${DISPLAY}
+      - XAUTHORITY=/root/.Xauthority
+      - QT_X11_NO_MITSHM=1
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+      - ROBOT_IP=${ROBOT_IP:-192.168.12.20}
+      - ROBOT_LENGTH_M=${ROBOT_LENGTH_M:-0.89}
+      - CAMERA_HEIGHT_M=${CAMERA_HEIGHT_M:-1.80}
+      - CAMERA_PITCH_DEG=${CAMERA_PITCH_DEG:-30.0}
+      - CAMERA_FPS=${CAMERA_FPS:-30}
+      - DESIRED_CAMERA_DISTANCE_M=${DESIRED_CAMERA_DISTANCE_M:-1.40}
+      - ROS_MASTER_URI=http://localhost:11311
+      - ROS_IP=
+      - ROS_HOSTNAME=
+      - EXPERIMENT_CONFIG=${EXPERIMENT_CONFIG:-runtime_baseline}
+      - EXPERIMENT_SCENARIO=${EXPERIMENT_SCENARIO:-unspecified}
+      - EXPERIMENT_RUN_ID=${EXPERIMENT_RUN_ID:-}
+      - EXPERIMENT_LOGGING=${EXPERIMENT_LOGGING:-1}
+      - EXPERIMENT_LOG_ROOT=/app/experiments/logs
+      - EXPERIMENT_RECORD_RGBD=${EXPERIMENT_RECORD_RGBD:-0}
+      - MIR_CONTROL_MODE=${MIR_CONTROL_MODE:-live}
+      - E1_IMPLEMENTED_CONFIGS=${E1_IMPLEMENTED_CONFIGS:-p_original}
+    
+    # Network mode for ROS communication
+    network_mode: host
+    
+    # Privileged mode for hardware access
+    privileged: true
+    
+    volumes:
+      # X11 socket for GUI
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${XAUTHORITY:-${HOME}/.Xauthority}:/root/.Xauthority:ro
+      
+      # PulseAudio for sound
+      - /run/user/1000/pulse:/run/user/1000/pulse:rw
+      - ${HOME}/.config/pulse:/root/.config/pulse:ro
+      
+      # Application code (for development)
+      - ./src:/app/src:ro
+      - ./assets:/app/assets:ro
+      # Experiment tools and paper-oriented logs; kept outside the container
+      - ./experiments:/app/experiments:rw
+      
+      # USB devices for RealSense camera
+      - /dev:/dev:rw
+    
+    device_cgroup_rules:
+      - 'c *:* rmw'  # Allow all character devices
+      
+    devices:
+      # Grant access to all devices (includes USB camera)
+      - /dev/bus/usb:/dev/bus/usb
+      # Video devices
+      - /dev/video0:/dev/video0
+      - /dev/video1:/dev/video1
+      - /dev/video2:/dev/video2
+      - /dev/video3:/dev/video3
+      - /dev/video4:/dev/video4
+      - /dev/video5:/dev/video5
+      # DRI for GPU access
+      - /dev/dri:/dev/dri
+    
+    stdin_open: true
+    tty: true
+    
+    command: python3 /app/src/main.py
